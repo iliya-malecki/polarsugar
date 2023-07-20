@@ -1,4 +1,5 @@
-from typing import Callable
+from __future__ import annotations
+from typing import Callable, Any
 from functools import reduce
 import polars as pl
 
@@ -10,7 +11,7 @@ class ForkAccessor:
         '''
         self._expr = expr
 
-    def __call__(self, funclist:'list[str|Callable[[pl.Expr], pl.Expr]]', name_sep='_') -> 'list[pl.Expr]':
+    def __call__(self, funclist:list[str|Callable[[pl.Expr], pl.Expr]], name_sep='_') -> list[pl.Expr]:
         '''
         Transform the original `pl.Expr` into multiple with a list of functions.
         `funclist` can contain both real callables and string names,
@@ -29,13 +30,13 @@ class ForkAccessor:
                 res.append(f(self._expr))
         return res
 
-    def all(self, funclist:'list[str|Callable[[pl.Expr], pl.Expr]]', name_sep='_') -> pl.Expr:
+    def all(self, funclist:list[str|Callable[[pl.Expr], pl.Expr]], name_sep='_') -> pl.Expr:
         '''
         Do the `fork()` and boolean-`&` the results
         '''
         return reduce(lambda acc, el: acc & el, self.__call__(funclist, name_sep))
 
-    def any(self, funclist:'list[str|Callable[[pl.Expr], pl.Expr]]', name_sep='_') -> pl.Expr:
+    def any(self, funclist:list[str|Callable[[pl.Expr], pl.Expr]], name_sep='_') -> pl.Expr:
         '''
         Do the `fork()` and boolean-`|` the results
         '''
@@ -44,9 +45,10 @@ class ForkAccessor:
 
 
 class colsugar:
-    def __init__(self, expr: 'pl.Expr|str'):
+    def __init__(self, expr: pl.Expr|str):
         '''
-        a wrapper around `pl.Expr` that provides missing syntactic sugar
+        A wrapper around `pl.Expr` that provides missing syntactic sugar.
+        Also accepts a string as a shortcut (and for an pl.Expr-like syntax visuals)
         '''
         if isinstance(expr, str):
             expr = pl.col(expr)
@@ -60,7 +62,7 @@ class colsugar:
         '''
         return ForkAccessor(self._expr)
 
-    def pipe(self, func: 'Callable[[pl.Expr],pl.Expr]', *args, **kwargs) -> pl.Expr:
+    def pipe(self, func: Callable[[pl.Expr],pl.Expr], *args, **kwargs) -> pl.Expr:
         '''
         apply a `func` to `self` to transform the expression
         '''
