@@ -84,6 +84,13 @@ class colsugar:
             lambda s: s.to_frame('keys').join(mapper, on='keys',how='left').to_series(1)
         )
 
+    def replace(self, when: Any, then: Any) -> pl.Expr:
+        '''
+        Pandas-style replace.
+        Does not check if `when` is type-compatible with the column(s)
+        '''
+        return pl.when(self._expr == when).then(then).otherwise(self._expr).keep_name()
+
 
 def register(name='sugar'):
     '''
